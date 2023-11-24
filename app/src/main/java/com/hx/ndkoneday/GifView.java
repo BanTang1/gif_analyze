@@ -3,12 +3,10 @@ package com.hx.ndkoneday;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Movie;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import java.io.File;

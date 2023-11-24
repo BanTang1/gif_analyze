@@ -12,5 +12,6 @@
 /build
 /captures
 .externalNativeBuild
-.cxx
+/app/.cxx
+/app/build
 local.properties

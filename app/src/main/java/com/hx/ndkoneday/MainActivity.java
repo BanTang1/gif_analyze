@@ -61,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,PERMISSIONS_STORAGE,REQUEST_CODE);
+        } else {
+            String destinationPath = FileUtil.getAppPrivateDir(this);
+            FileUtil.copyRawResourceToFile(this, R.raw.demo, destinationPath);
         }
     }
 
@@ -79,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
                     if (grantResult == PackageManager.PERMISSION_GRANTED) {
                         // 权限被授予
                         // 在这里执行相关操作
+                        String destinationPath = FileUtil.getAppPrivateDir(this);
+                        FileUtil.copyRawResourceToFile(this, R.raw.demo, destinationPath);
                     } else {
                         finish();
                     }

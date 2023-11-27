@@ -1,5 +1,8 @@
 package com.hx.ndkoneday;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -8,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -32,6 +36,19 @@ public class MainActivity extends AppCompatActivity {
     private final int REQUEST_CODE = 1;
     private Bitmap mBitmap;
 
+    // Android 13中，废弃原有的读写权限，引入了新的权限， 此处获取权限请求结果。
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    if (isGranted) {
+                        // User allowed the permission.
+                    } else {
+                        // User denied the permission.
+                    }
+                }
+            });
+
     // 渲染GIF的后续帧
     private final Handler mHandler = new Handler(Objects.requireNonNull(Looper.myLooper())) {
         @Override
@@ -49,25 +66,52 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         checkPermissions();
 
+        // 实际上不需要任何权限
+        String destinationPath = FileUtil.getAppPrivateDir(this);
+        FileUtil.copyRawResourceToFile(this, R.raw.demo, destinationPath);
+
         binding = ActivityGifBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
     }
 
+    /**
+     * 请求权限， 为了验证高版本中不同权限的区别，
+     * 实际上将res/raw/ 目录下的文件拷贝到应用程序的私有目录不需要任何权限，
+     * 可直接在onCreate() 中拷贝
+     */
     private void checkPermissions(){
-        String[] PERMISSIONS_STORAGE ={
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-        };
-        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,PERMISSIONS_STORAGE,REQUEST_CODE);
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            // Android 13 中，也废弃了写入权限， 取而代之的是 MediaStore API 以及  SAF（Storage Access Framework）
+            // 使用这个方式请求权限比之前要简洁，不错
+            requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
         } else {
-            String destinationPath = FileUtil.getAppPrivateDir(this);
-            FileUtil.copyRawResourceToFile(this, R.raw.demo, destinationPath);
+            // 经典请求权限方式
+            String[] PERMISSIONS_STORAGE ={
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
+            int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,PERMISSIONS_STORAGE,REQUEST_CODE);
+            } else {
+                String destinationPath = FileUtil.getAppPrivateDir(this);
+                FileUtil.copyRawResourceToFile(this, R.raw.demo, destinationPath);
+            }
         }
     }
 
 
+    /**
+     *
+     * 经典权限请求结果接收方式
+     * @param requestCode The request code passed in {@link #checkPermissions()}
+     * @param permissions The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *     which is either {@link android.content.pm.PackageManager#PERMISSION_GRANTED}
+     *     or {@link android.content.pm.PackageManager#PERMISSION_DENIED}. Never null.
+     *
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

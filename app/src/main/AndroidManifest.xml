@@ -10,6 +10,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+<!--    Android 13  对存储空间进一步加强，
+        废弃 android.permission.READ_EXTERNAL_STORAGE
+        改为以下三个
+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
 
     <application
         android:allowBackup="true"
